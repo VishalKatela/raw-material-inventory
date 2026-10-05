@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-COPY target/*.jar /app/app.jar
+COPY target/raw-material-inventory-*.jar /app/app.jar
 
 EXPOSE 8080
 

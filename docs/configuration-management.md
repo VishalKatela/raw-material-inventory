@@ -1,13 +1,13 @@
 # Configuration Management Script
 
 ## Server prerequisites
-- Java 21 runtime
-- Maven or wrapper
-- MySQL 8 server
-- Working directory for application deployment
-- User account for service runtime
+- Ubuntu host reachable over SSH
+- Ansible installed on the control machine
+- SSH access and sudo privileges on the target host
+- Built application JAR available on the control machine
 - Firewall or ingress rule for port 8080
-- Systemd service file or Tomcat deployment folder
+
+The playbook installs Java 21, creates a dedicated service account and application directory, copies the JAR, and enables a systemd service. It does not install or configure MySQL. The application therefore uses its default in-memory H2 database unless a persistent database configuration is added separately.
 
 ## Example Ansible inventory
 ```yaml
@@ -20,31 +20,21 @@ all:
       app_port: 8080
 ```
 
-## Example Ansible playbook
-```yaml
-- hosts: appserver
-  become: true
-  tasks:
-    - name: Install Java
-      apt:
-        name: openjdk-21-jre-headless
-        state: present
+## Run provisioning
+Copy `ansible/inventory.ini.example` to `ansible/inventory.ini`, replace the example host and user, then run:
 
-    - name: Install MySQL client
-      apt:
-        name: mysql-client
-        state: present
-
-    - name: Create application directory
-      file:
-        path: /opt/raw-material-inventory
-        state: directory
-        mode: '0755'
+```bash
+./mvnw package
+ansible-playbook -i ansible/inventory.ini ansible/provision.yml \
+  -e artifact_path=target/raw-material-inventory-0.0.1-SNAPSHOT.jar
 ```
+
+After provisioning, check the service with `systemctl status raw-material-inventory` and verify `http://<host>:8080/` returns HTTP 200.
 
 ## Provisioning goals
 - ensure prerequisites are installed
 - create runtime directories
 - configure application ownership
-- expose the required port
-- ensure repeatable and idempotent setup
+- enable and start the systemd service
+- configure network access to the required port separately
+- keep provisioning repeatable and idempotent

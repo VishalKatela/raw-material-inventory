@@ -64,6 +64,25 @@
             margin-bottom: 20px;
         }
 
+        .filter-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
         button {
             background: #2563eb;
             color: white;
@@ -208,6 +227,18 @@
                 Refresh Inventory
             </button>
 
+        </div>
+
+        <div class="filter-bar">
+            <input type="text" id="searchKeyword" placeholder="Search by name or code">
+            <select id="statusFilter">
+                <option value="">All statuses</option>
+                <option value="IN_STOCK">In Stock</option>
+                <option value="LOW_STOCK">Low Stock</option>
+                <option value="OUT_OF_STOCK">Out of Stock</option>
+            </select>
+            <input type="text" id="categoryFilter" placeholder="Filter by category">
+            <button type="button" onclick="applyFilters()">Apply Filters</button>
         </div>
 
         <div id="addMaterialForm" class="table-container" style="display:none;">
@@ -434,6 +465,72 @@
 
         }
 
+
+        async function applyFilters() {
+            const keyword = document.getElementById('searchKeyword').value;
+            const status = document.getElementById('statusFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+
+            try {
+                const params = new URLSearchParams();
+                if (keyword) params.append('keyword', keyword);
+                if (status) params.append('status', status);
+                if (category) params.append('category', category);
+
+                const response = await fetch('/api/materials/search?' + params.toString());
+                const materials = await response.json();
+                renderMaterials(materials);
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        }
+
+        function renderMaterials(materials) {
+            const table = document.getElementById('materialTable');
+            table.innerHTML = '';
+
+            let totalStock = 0;
+            let lowStockCount = 0;
+
+            materials.forEach(material => {
+                totalStock += Number(material.quantity);
+
+                if (material.status === 'LOW_STOCK') {
+                    lowStockCount++;
+                }
+
+                let statusClass = '';
+
+                if (material.status === 'IN_STOCK') {
+                    statusClass = 'in-stock';
+                } else if (material.status === 'LOW_STOCK') {
+                    statusClass = 'low-stock';
+                } else if (material.status === 'OUT_OF_STOCK') {
+                    statusClass = 'out-stock';
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${material.materialCode}</td>
+                    <td>${material.name}</td>
+                    <td>${material.category || '-'}</td>
+                    <td>${material.unit || '-'}</td>
+                    <td>${material.quantity}</td>
+                    <td>${material.minimumQuantity}</td>
+                    <td>
+                        <span class="status ${statusClass}">
+                            ${material.status}
+                        </span>
+                    </td>
+                `;
+
+                table.appendChild(row);
+            });
+
+            document.getElementById('totalMaterials').textContent = materials.length;
+            document.getElementById('totalStock').textContent = totalStock;
+            document.getElementById('lowStock').textContent = lowStockCount;
+        }
 
         // Load dashboard when page opens
         loadMaterials();

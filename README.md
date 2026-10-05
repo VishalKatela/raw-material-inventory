@@ -13,21 +13,22 @@ This project implements a raw material inventory management system designed for 
 - Java 21
 - Spring Boot 4.0.0
 - Maven
-- MySQL database
+- H2 in-memory database for local development
+- MySQL is the intended persistent deployment database; production database wiring is not included yet
 - Thymeleaf + HTML/JavaScript UI
 - Tomcat embedded server
 
 ## Local development setup
-1. Ensure Java 21 and Maven are installed.
-2. Start MySQL and create a database named `raw_material_inventory`.
-3. Update credentials in `src/main/resources/application.properties` if necessary.
-4. Run:
+1. Ensure Java 21 is installed. Maven is provided by the wrapper.
+2. From this directory, run:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-5. Open http://localhost:8080
+3. Open http://localhost:8080
+
+The default configuration uses an in-memory H2 database. Data is cleared when the application stops. MySQL is the planned persistent deployment option, but no production profile or external database configuration is currently supplied.
 
 ## MVP scope
 The MVP includes:
@@ -46,7 +47,12 @@ This repository contains the planning and delivery artifacts for the 15-week cur
 - Git and branching policy
 - Jenkins pipeline and Docker deployment artifacts
 - Selenium test plan and automation framework scaffold
-- Ansible provisioning files
+- Ansible provisioning playbook under `ansible/`
+
+## CI and deployment
+GitHub Actions runs `./mvnw test package` for pushes and pull requests to `main` and `development`. The Jenkins pipeline additionally builds a Docker image, replaces the local application container, and checks the HTTP health endpoint. A Jenkins agent running the pipeline must have Docker installed and access to the Docker daemon.
+
+The Ansible playbook provisions Java 21 and a systemd service on an Ubuntu host. See `docs/configuration-management.md` for inventory setup and execution. Provisioning the application does not provision MySQL; the current default H2 database is in-memory and is not suitable for persistent production data.
 
 ## Branch policy
 Use the branch strategy described in `.github/BRANCH_POLICY.md`.
