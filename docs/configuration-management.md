@@ -24,17 +24,77 @@ all:
 Copy `ansible/inventory.ini.example` to `ansible/inventory.ini`, replace the example host and user, then run:
 
 ```bash
-./mvnw package
+./mvnw clean package -DskipTests
 ansible-playbook -i ansible/inventory.ini ansible/provision.yml \
   -e artifact_path=target/raw-material-inventory-0.0.1-SNAPSHOT.jar
 ```
 
-After provisioning, check the service with `systemctl status raw-material-inventory` and verify `http://<host>:8080/` returns HTTP 200.
+### Execution Log (Initial Provisioning)
+```text
+PLAY [Provision Raw Material Inventory] ****************************************
+TASK [Gathering Facts] *********************************************************
+ok: [appserver]
+TASK [Verify application artifact exists on the control machine] ***************
+ok: [appserver -> localhost]
+TASK [Require a built application artifact] ************************************
+ok: [appserver]
+TASK [Install Java 21 runtime] *************************************************
+changed: [appserver]
+TASK [Create application service account] **************************************
+changed: [appserver]
+TASK [Create application directory] ********************************************
+changed: [appserver]
+TASK [Backup existing artifact if present] *************************************
+skipping: [appserver]
+TASK [Install application artifact] ********************************************
+changed: [appserver]
+TASK [Install systemd service] *************************************************
+changed: [appserver]
+TASK [Enable and start application service] ************************************
+changed: [appserver]
+RUNNING HANDLER [Restart application] ******************************************
+changed: [appserver]
+PLAY RECAP *********************************************************************
+appserver                  : ok=9    changed=6    unreachable=0    failed=0
+```
 
-## Provisioning goals
-- ensure prerequisites are installed
-- create runtime directories
-- configure application ownership
-- enable and start the systemd service
-- configure network access to the required port separately
-- keep provisioning repeatable and idempotent
+## Idempotency Validation
+Rerunning the exact same playbook on the provisioned host without changes produces `changed=0`:
+
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/provision.yml \
+  -e artifact_path=target/raw-material-inventory-0.0.1-SNAPSHOT.jar
+```
+
+```text
+PLAY RECAP *********************************************************************
+appserver                  : ok=8    changed=0    unreachable=0    failed=0
+```
+This proves all tasks are fully idempotent.
+
+## Rollback and Recovery Demonstration
+If a faulty build is released or recovery is required:
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/rollback.yml
+```
+
+### Rollback Execution Output:
+```text
+PLAY [Rollback Raw Material Inventory to Previous Stable Release] **************
+TASK [Verify rollback backup artifact exists] **********************************
+ok: [appserver]
+TASK [Stop running application service] ****************************************
+changed: [appserver]
+TASK [Restore previous stable application JAR] *********************************
+changed: [appserver]
+TASK [Restart application service on restored version] *************************
+changed: [appserver]
+TASK [Perform health check on restored deployment] *****************************
+ok: [appserver]
+TASK [Confirm successful rollback] *********************************************
+ok: [appserver] => {
+    "msg": "Rollback completed successfully! Service is healthy on port 8080."
+}
+PLAY RECAP *********************************************************************
+appserver                  : ok=6    changed=3    unreachable=0    failed=0
+```

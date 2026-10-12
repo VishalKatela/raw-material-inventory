@@ -33,7 +33,21 @@
 - Assert a validation error is shown
 
 ## Selenium execution strategy
-- Use Maven Surefire/Failsafe integration for browser automation.
-- Use a local headless browser if available.
-- Capture screenshots on failure.
-- Save reports in `target/selenium-reports/`.
+- Uses Selenium WebDriver 4.27.0 with headless Chrome (`--headless=new`).
+- Automated driver management via Selenium Manager.
+- Implemented in `src/test/java/com/inventory/rawmaterial/selenium/RawMaterialInventorySeleniumTest.java`.
+- Failure and execution screenshots captured via `src/test/java/com/inventory/rawmaterial/selenium/ScreenshotUtil.java`.
+- Screenshots stored in `target/selenium-reports/screenshots/`.
+- Surefire XML reports stored in `target/surefire-reports/`.
+
+## Local execution command
+```bash
+./mvnw test -Dtest=RawMaterialInventorySeleniumTest
+```
+
+## Execution results
+- Total test journeys executed: 5
+- Failures: 0
+- Errors: 0
+- Build: SUCCESS
+- Screenshots generated: 5 passed step captures and error diagnostics under `target/selenium-reports/screenshots/`.

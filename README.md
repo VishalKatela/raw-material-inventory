@@ -26,7 +26,7 @@ This project implements a raw material inventory management system designed for 
 ./mvnw spring-boot:run
 ```
 
-3. Open http://localhost:8080
+3. Open http://localhost:8080 in your browser.
 
 The default configuration uses an in-memory H2 database. Data is cleared when the application stops. MySQL is the planned persistent deployment option, but no production profile or external database configuration is currently supplied.
 

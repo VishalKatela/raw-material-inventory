@@ -45,6 +45,16 @@
         group: "{{ app_user }}"
         mode: "0755"
 
+    - name: Backup existing artifact if present
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ app_dir }}/app.jar"
+        dest: "{{ app_dir }}/app.jar.bak"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+      ignore_errors: true
+
     - name: Install application artifact
       ansible.builtin.copy:
         src: "{{ artifact_path }}"
@@ -52,6 +62,7 @@
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
         mode: "0644"
+        backup: true
       notify: Restart application
 
     - name: Install systemd service

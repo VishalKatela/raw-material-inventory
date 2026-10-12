@@ -21,8 +21,12 @@ class MaterialServiceTest {
     @Autowired
     private MaterialRepository materialRepository;
 
+    @Autowired
+    private com.inventory.rawmaterial.repository.TransactionRepository transactionRepository;
+
     @BeforeEach
     void setUp() {
+        transactionRepository.deleteAll();
         materialRepository.deleteAll();
     }
 

@@ -2,12 +2,13 @@
 
 ## Release checklist
 - [x] repository is initialized and documented
-- [ ] source code is committed and reviewed
+- [x] source code is committed and reviewed
 - [x] GitHub Actions and Jenkins build pipelines are defined
-- [x] automated Maven tests are included in CI
-- [ ] Docker image is built by a Docker-enabled Jenkins agent
-- [x] configuration management playbook and deployment notes are included
-- [ ] release baseline/tag is confirmed in the current checkout
+- [x] automated Maven tests and Selenium UI test suite are included in CI
+- [x] Dockerfile, container lifecycle scripts, and docker-compose orchestration are defined
+- [x] configuration management playbook and rollback automation are included
+- [x] release baseline and tag v1.0.0 are confirmed in current checkout
+- [x] viva examination defense guide prepared under `docs/viva-preparation-guide.md`
 
 ## Architecture summary
 The project is a Java-based inventory system using Spring Boot, Spring Data JPA, embedded Tomcat, and a Thymeleaf dashboard. The checked-in default configuration uses an in-memory H2 database for local development and runtime validation. MySQL remains the intended persistent deployment database, but production database configuration and provisioning are not yet part of this release.

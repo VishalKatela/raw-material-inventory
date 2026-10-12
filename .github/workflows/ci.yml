@@ -21,3 +21,12 @@ jobs:
 
       - name: Build with Maven
         run: ./mvnw test package
+
+      - name: Archive Test Reports and Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-and-screenshots
+          path: |
+            target/surefire-reports/
+            target/selenium-reports/
