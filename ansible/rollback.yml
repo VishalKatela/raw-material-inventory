@@ -1,0 +1,55 @@
+---
+- name: Rollback Raw Material Inventory to Previous Stable Release
+  hosts: app
+  become: true
+  vars:
+    app_name: raw-material-inventory
+    app_user: raw-material-inventory
+    app_dir: /opt/raw-material-inventory
+    app_port: 8080
+    rollback_artifact: "{{ playbook_dir }}/../target/raw-material-inventory-previous.jar"
+
+  tasks:
+    - name: Verify rollback backup artifact exists
+      ansible.builtin.stat:
+        path: "{{ app_dir }}/app.jar.bak"
+      register: backup_file
+
+    - name: Fail if no rollback candidate exists
+      ansible.builtin.fail:
+        msg: "No backup artifact found at {{ app_dir }}/app.jar.bak to restore!"
+      when: not backup_file.stat.exists
+
+    - name: Stop running application service
+      ansible.builtin.systemd:
+        name: "{{ app_name }}"
+        state: stopped
+
+    - name: Restore previous stable application JAR
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ app_dir }}/app.jar.bak"
+        dest: "{{ app_dir }}/app.jar"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0644"
+
+    - name: Restart application service on restored version
+      ansible.builtin.systemd:
+        name: "{{ app_name }}"
+        state: started
+        daemon_reload: true
+
+    - name: Perform health check on restored deployment
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/"
+        status_code: 200
+        return_content: false
+      register: health_result
+      until: health_result.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Confirm successful rollback
+      ansible.builtin.debug:
+        msg: "Rollback completed successfully! Service is healthy on port {{ app_port }}."
