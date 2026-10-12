@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
@@ -26,28 +27,37 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
-    public Transaction processTransaction(
+        @Transactional
+        public Transaction processTransaction(
             Integer materialId,
             String transactionType,
             BigDecimal quantity,
             String remarks) {
+            if (quantity == null || quantity.signum() <= 0) {
+                throw new RuntimeException("Quantity must be greater than zero");
+            }
+
+            String normalizedType = transactionType == null
+                    ? ""
+                    : transactionType.trim().toUpperCase();
+            if (!"STOCK_IN".equals(normalizedType) && !"STOCK_OUT".equals(normalizedType)) {
+                throw new RuntimeException("Invalid transaction type");
+            }
 
         Material material = materialRepository.findById(materialId)
                 .orElseThrow(() -> new RuntimeException("Material not found"));
 
         BigDecimal currentQuantity = material.getQuantity();
 
-        if ("STOCK_IN".equalsIgnoreCase(transactionType)) {
+            if ("STOCK_IN".equals(normalizedType)) {
             material.setQuantity(currentQuantity.add(quantity));
-        } else if ("STOCK_OUT".equalsIgnoreCase(transactionType)) {
+            } else {
 
             if (currentQuantity.compareTo(quantity) < 0) {
                 throw new RuntimeException("Insufficient stock");
             }
 
             material.setQuantity(currentQuantity.subtract(quantity));
-        } else {
-            throw new RuntimeException("Invalid transaction type");
         }
 
         if (material.getQuantity().compareTo(BigDecimal.ZERO) == 0) {
@@ -62,7 +72,7 @@ public class TransactionService {
 
         Transaction transaction = new Transaction();
         transaction.setMaterial(material);
-        transaction.setTransactionType(transactionType.toUpperCase());
+        transaction.setTransactionType(normalizedType);
         transaction.setQuantity(quantity);
         transaction.setTransactionDate(LocalDateTime.now());
         transaction.setRemarks(remarks);

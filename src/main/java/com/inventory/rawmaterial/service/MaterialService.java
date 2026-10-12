@@ -1,11 +1,13 @@
 package com.inventory.rawmaterial.service;
 
-import com.inventory.rawmaterial.model.Material;
-import com.inventory.rawmaterial.repository.MaterialRepository;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.List;
+import com.inventory.rawmaterial.model.Material;
+import com.inventory.rawmaterial.repository.MaterialRepository;
 
 @Service
 public class MaterialService {
@@ -64,6 +66,29 @@ public class MaterialService {
         updateStatus(material);
 
         return materialRepository.save(material);
+    }
+
+    public List<Material> searchMaterials(String keyword, String status, String category) {
+        List<Material> all = materialRepository.findAll();
+        List<Material> results = new ArrayList<>();
+
+        for (Material material : all) {
+            boolean matchesKeyword = keyword == null || keyword.isBlank() ||
+                    material.getName().toLowerCase().contains(keyword.toLowerCase()) ||
+                    material.getMaterialCode().toLowerCase().contains(keyword.toLowerCase());
+
+            boolean matchesStatus = status == null || status.isBlank() ||
+                    status.equalsIgnoreCase(material.getStatus());
+
+            boolean matchesCategory = category == null || category.isBlank() ||
+                    (material.getCategory() != null && material.getCategory().equalsIgnoreCase(category));
+
+            if (matchesKeyword && matchesStatus && matchesCategory) {
+                results.add(material);
+            }
+        }
+
+        return results;
     }
 
     private void updateStatus(Material material) {
