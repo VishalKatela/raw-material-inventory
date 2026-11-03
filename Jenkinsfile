@@ -3,12 +3,14 @@ pipeline {
 
     parameters {
         choice(name: 'TARGET_ENV', choices: ['dev', 'staging', 'production'], description: 'Deployment Target Environment')
-        string(name: 'APP_PORT', defaultValue: '8080', description: 'Application Port')
+        string(name: 'APP_PORT', defaultValue: '8081', description: 'Application Port')
         booleanParam(name: 'PUSH_TO_REGISTRY', defaultValue: false, description: 'Push image to Docker registry')
         string(name: 'DOCKER_REGISTRY', defaultValue: 'docker.io/vishalkatela', description: 'Docker Registry/Repository')
     }
 
     environment {
+        PATH = "${env.HOME}/.docker/bin:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin:${env.PATH}"
+        DOCKER_HOST = "unix://${env.HOME}/.docker/run/docker.sock"
         APP_NAME = 'raw-material-inventory'
         IMAGE_NAME = 'raw-material-inventory'
         IMAGE_TAG = "${env.BUILD_NUMBER ?: 'v1.0.0'}"
