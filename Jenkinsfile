@@ -65,16 +65,20 @@ pipeline {
         stage('Deploy and Health Check') {
             steps {
                 sh """
+                    PORT_TO_USE="${params.APP_PORT}"
+                    if [ "\$PORT_TO_USE" = "8080" ]; then
+                        PORT_TO_USE="8081"
+                    fi
                     docker rm -f ${APP_NAME} 2>/dev/null || true
                     docker run --detach \\
                         --name ${APP_NAME} \\
                         --restart unless-stopped \\
-                        --publish ${params.APP_PORT}:8080 \\
+                        --publish \${PORT_TO_USE}:8080 \\
                         ${IMAGE_NAME}:${IMAGE_TAG}
 
                     for attempt in \$(seq 1 30); do
-                        if curl --fail --silent http://localhost:${params.APP_PORT}/ >/dev/null; then
-                            echo "${APP_NAME} is healthy in ${params.TARGET_ENV} on port ${params.APP_PORT}"
+                        if curl --fail --silent http://localhost:\${PORT_TO_USE}/ >/dev/null; then
+                            echo "${APP_NAME} is healthy in ${params.TARGET_ENV} on port \${PORT_TO_USE}"
                             exit 0
                         fi
                         sleep 2
